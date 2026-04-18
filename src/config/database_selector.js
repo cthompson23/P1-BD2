@@ -27,6 +27,13 @@ if (dbType === "mongo") {
   orders_dao = require("../dao/postgres/orders_postgres_dao.js");
   reservations_dao = require("../dao/postgres/reservation_postgres_dao.js");
   dishes_dao = require("../dao/postgres/dishes_postgres_dao.js");
+  
+  restaurants_dao = new restaurants_dao();
+  tables_dao = new tables_dao();
+  menus_dao = new menus_dao();
+  orders_dao = new orders_dao();
+  reservations_dao = new reservations_dao();
+  dishes_dao = new dishes_dao();
 }
 
 module.exports = {
