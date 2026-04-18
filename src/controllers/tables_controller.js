@@ -1,10 +1,10 @@
-const { tableDAO } = require("../config/database_selector.js");
-const TableDTO = require("../dto/tables_dto.js");
+const { tables_dao } = require("../config/database_selector.js");
+const tables_dto = require("../dto/tables_dto.js");
 
 // Obtener todas las mesas
 exports.get_all_tables = async (req, res, next) => {
   try {
-    const tables = await tableDAO.getAll();
+    const tables = await tables_dao.getAll();
     res.json(tables);
   } catch (error) {
     next(error);
@@ -15,7 +15,7 @@ exports.get_all_tables = async (req, res, next) => {
 exports.get_tables_by_restaurant = async (req, res, next) => {
   try {
     const { rest_id } = req.params;
-    const tables = await tableDAO.getByRestaurant(rest_id);
+    const tables = await tables_dao.getByRestaurant(rest_id);
     res.json(tables);
   } catch (error) {
     next(error);
@@ -27,7 +27,7 @@ exports.get_table_by_id = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const table = await tableDAO.getById(id);
+    const table = await tables_dao.getById(id);
 
     if (!table) {
       return res.status(404).json({ message: "Mesa no encontrada" });
@@ -42,7 +42,7 @@ exports.get_table_by_id = async (req, res, next) => {
 // Crear mesa
 exports.create_table = async (req, res, next) => {
   try {
-    const dto = new TableDTO(req.body);
+    const dto = new tables_dto(req.body);
 
     if (!dto.rest_id || dto.numero_mesa === undefined || dto.capacidad === undefined) {
       return res.status(400).json({
@@ -50,8 +50,8 @@ exports.create_table = async (req, res, next) => {
       });
     }
 
-    if (typeof tableDAO.restaurantExists === "function") {
-      const exists = await tableDAO.restaurantExists(dto.rest_id);
+    if (typeof tables_dao.restaurantExists === "function") {
+      const exists = await tables_dao.restaurantExists(dto.rest_id);
 
       if (!exists) {
         return res.status(404).json({
@@ -60,7 +60,7 @@ exports.create_table = async (req, res, next) => {
       }
     }
 
-    const newTable = await tableDAO.create({
+    const newTable = await tables_dao.create({
       ...dto,
       disponible: dto.disponible !== undefined ? dto.disponible : true
     });
@@ -76,16 +76,16 @@ exports.update_table = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const existing = await tableDAO.getById(id);
+    const existing = await tables_dao.getById(id);
 
     if (!existing) {
       return res.status(404).json({ message: "Mesa no encontrada" });
     }
 
-    const dto = new TableDTO(req.body);
+    const dto = new tables_dto(req.body);
 
-    if (dto.rest_id && typeof tableDAO.restaurantExists === "function") {
-      const exists = await tableDAO.restaurantExists(dto.rest_id);
+    if (dto.rest_id && typeof tables_dao.restaurantExists === "function") {
+      const exists = await tables_dao.restaurantExists(dto.rest_id);
 
       if (!exists) {
         return res.status(404).json({
@@ -94,7 +94,7 @@ exports.update_table = async (req, res, next) => {
       }
     }
 
-    const updated = await tableDAO.update(id, dto);
+    const updated = await tables_dao.update(id, dto);
 
     res.json(updated);
   } catch (error) {
@@ -107,7 +107,7 @@ exports.delete_table = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const deleted = await tableDAO.delete(id);
+    const deleted = await tables_dao.delete(id);
 
     if (!deleted) {
       return res.status(404).json({ message: "Mesa no encontrada" });
@@ -124,7 +124,7 @@ exports.check_availability = async (req, res, next) => {
   try {
     const { rest_id, fecha, hora, capacidad } = req.query;
 
-    const available = await tableDAO.checkAvailability({
+    const available = await tables_dao.checkAvailability({
       rest_id,
       fecha,
       hora,

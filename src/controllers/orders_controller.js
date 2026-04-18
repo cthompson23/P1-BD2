@@ -1,5 +1,5 @@
-const { orderDAO } = require("../config/database_selector.js");
-const OrderDTO = require("../dto/orders_dto.js");
+const { orders_dao } = require("../config/database_selector.js");
+const order_dto = require("../dto/orders_dto.js");
 
 // Obtener todos
 exports.get_all_orders = async (req, res, next) => {
@@ -8,7 +8,7 @@ exports.get_all_orders = async (req, res, next) => {
     const roles = user.realm_access.roles || [];
     const isAdmin = roles.includes("admin");
 
-    const orders = await orderDAO.getAll({
+    const orders = await orders_dao.getAll({
       userId: user.sub,
       isAdmin
     });
@@ -25,10 +25,10 @@ exports.get_order_by_id = async (req, res, next) => {
     const { id } = req.params;
 
     const user = req.kauth.grant.access_token.content;
-    const roles = user.realm_access?.roles || [];
+    const roles = user.realm_access.roles || [];
     const isAdmin = roles.includes("admin");
 
-    const order = await orderDAO.getById(id, {
+    const order = await orders_dao.getById(id, {
       userId: user.sub,
       isAdmin
     });
@@ -48,9 +48,9 @@ exports.create_order = async (req, res, next) => {
   try {
     const user = req.kauth.grant.access_token.content;
 
-    const dto = new OrderDTO(req.body);
+    const dto = new order_dto(req.body);
 
-    const result = await orderDAO.create({
+    const result = await orders_dao.create({
       usuario_id: user.sub,
       ...dto
     });
@@ -68,7 +68,7 @@ exports.update_order_status = async (req, res, next) => {
     const { id } = req.params;
     const { estado } = req.body;
 
-    const updated = await orderDAO.updateStatus(id, estado);
+    const updated = await orders_dao.updateStatus(id, estado);
 
     if (!updated) {
       return res.status(404).json({ message: "Pedido no encontrado" });
@@ -86,7 +86,7 @@ exports.delete_order = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const deleted = await orderDAO.delete(id);
+    const deleted = await orders_dao.delete(id);
 
     if (!deleted) {
       return res.status(404).json({ message: "Pedido no encontrado" });

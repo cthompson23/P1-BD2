@@ -1,10 +1,10 @@
-const { reservationDAO } = require("../config/database_selector.js");
-const ReservationDTO = require("../dto/reservation_dto.js");
+const { reservations_dao } = require("../config/database_selector.js");
+const reservation_dto = require("../dto/reservation_dto.js");
 
 // Obtener todas
 exports.get_all_reservations = async (req, res, next) => {
   try {
-    const reservations = await reservationDAO.getAll();
+    const reservations = await reservations_dao.getAll();
     res.json(reservations);
   } catch (error) {
     next(error);
@@ -16,7 +16,7 @@ exports.get_reservation_by_id = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const reservation = await reservationDAO.getById(id);
+    const reservation = await reservations_dao.getById(id);
 
     if (!reservation) {
       return res.status(404).json({
@@ -34,9 +34,9 @@ exports.get_reservation_by_id = async (req, res, next) => {
 exports.create_reservation = async (req, res, next) => {
   try {
     const user = req.kauth.grant.access_token.content;
-    const dto = new ReservationDTO(req.body);
+    const dto = new reservation_dto(req.body);
 
-    const reservation = await reservationDAO.create({
+    const reservation = await reservations_dao.create({
       ...dto,
       usuario_id: user.sub
     });
@@ -54,7 +54,7 @@ exports.cancel_reservation = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const result = await reservationDAO.cancel(id);
+    const result = await reservations_dao.cancel(id);
 
     if (!result) {
       return res.status(404).json({
@@ -75,7 +75,7 @@ exports.delete_reservation = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const result = await reservationDAO.delete(id);
+    const result = await reservations_dao.delete(id);
 
     if (!result) {
       return res.status(404).json({

@@ -1,10 +1,10 @@
-const { dishDAO } = require("../config/database_selector.js");
-const DishDTO = require("../dto/dishes_dto.js");
+const { dishes_dao } = require("../config/database_selector.js");
+const dish_dto = require("../dto/dishes_dto.js");
 
 // Obtener todos los platos
 exports.get_all_dishes = async (req, res, next) => {
   try {
-    const dishes = await dishDAO.getAll();
+    const dishes = await dishes_dao.getAll();
     res.json(dishes);
   } catch (error) {
     next(error);
@@ -16,7 +16,7 @@ exports.get_dishes_by_menu = async (req, res, next) => {
   try {
     const { menu_id } = req.params;
 
-    const dishes = await dishDAO.getByMenu(menu_id);
+    const dishes = await dishes_dao.getByMenu(menu_id);
     res.json(dishes);
   } catch (error) {
     next(error);
@@ -28,7 +28,7 @@ exports.get_dish_by_id = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const dish = await dishDAO.getById(id);
+    const dish = await dishes_dao.getById(id);
 
     if (!dish) {
       return res.status(404).json({
@@ -45,7 +45,7 @@ exports.get_dish_by_id = async (req, res, next) => {
 // Crear plato
 exports.create_dish = async (req, res, next) => {
   try {
-    const dto = new DishDTO(req.body);
+    const dto = new dish_dto(req.body);
 
     // Validación obligatoria
     if (!dto.nombre_plato || dto.precio === undefined || !dto.menu_id) {
@@ -55,8 +55,8 @@ exports.create_dish = async (req, res, next) => {
     }
 
     // Validar menú si el DAO lo soporta
-    if (typeof dishDAO.menuExists === "function") {
-      const exists = await dishDAO.menuExists(dto.menu_id);
+    if (typeof dishes_dao.menuExists === "function") {
+      const exists = await dishes_dao.menuExists(dto.menu_id);
 
       if (!exists) {
         return res.status(404).json({
@@ -65,7 +65,7 @@ exports.create_dish = async (req, res, next) => {
       }
     }
 
-    const newDish = await dishDAO.create(dto);
+    const newDish = await dishes_dao.create(dto);
 
     res.status(201).json(newDish);
   } catch (error) {
@@ -80,7 +80,7 @@ exports.update_dish = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const existing = await dishDAO.getById(id);
+    const existing = await dishes_dao.getById(id);
 
     if (!existing) {
       return res.status(404).json({
@@ -88,11 +88,11 @@ exports.update_dish = async (req, res, next) => {
       });
     }
 
-    const dto = new DishDTO(req.body);
+    const dto = new dish_dto(req.body);
 
     // Validar menú si viene
-    if (dto.menu_id && typeof dishDAO.menuExists === "function") {
-      const exists = await dishDAO.menuExists(dto.menu_id);
+    if (dto.menu_id && typeof dishes_dao.menuExists === "function") {
+      const exists = await dishes_dao.menuExists(dto.menu_id);
 
       if (!exists) {
         return res.status(404).json({
@@ -101,7 +101,7 @@ exports.update_dish = async (req, res, next) => {
       }
     }
 
-    const updated = await dishDAO.update(id, dto);
+    const updated = await dishes_dao.update(id, dto);
 
     res.json(updated);
   } catch (error) {
@@ -116,7 +116,7 @@ exports.delete_dish = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const deleted = await dishDAO.delete(id);
+    const deleted = await dishes_dao.delete(id);
 
     if (!deleted) {
       return res.status(404).json({
