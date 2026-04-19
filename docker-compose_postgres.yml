@@ -36,15 +36,47 @@ services:
       - db_keycloak
     volumes:
       - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.3
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - http.host=0.0.0.0
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sSf http://localhost:9200/ || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
   api:
     build: .
-    ports:
-      - "5001:${PORT}"
+    container_name: api
     env_file:
       - .env.postgres
     depends_on:
-      - keycloak
-      - db
+      keycloak:
+        condition: service_started
+      db:
+        condition: service_started
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ELASTICSEARCH_ENDPOINT=http://elasticsearch:9200
+      - ELASTICSEARCH_API_KEY=
+    ports:
+      - "5001:${PORT}"
+    command: ["node", "server.js"]
+    
+volumes:
+  esdata:
+    driver: local
 
- 
+
     
