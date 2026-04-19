@@ -6,9 +6,10 @@ El proyecto utiliza contenedores Docker, autenticación con Keycloak y una base 
 - **Node.js**
 - **Express.js**
 - **PostgreSQL**
+- **Mongodb**
 - **Keycloak**
 - **Docker**
-- **Docker Compose**
+- **Elasticsearch**
 
 ## 🛠️ Instalación
 Clonar repositorio:
@@ -16,7 +17,7 @@ Clonar repositorio:
 git clone https://github.com/
 ```
 
-Crear archivo ```.env``` en la raíz del proyecto, por ejemplo:
+Crear archivo ```.env.postgres``` en la raíz del proyecto, por ejemplo:
 ```
 PORT=5000
 BD_USER=postgres
@@ -24,6 +25,7 @@ BD_PASSWORD=postgres
 BD_DATABASE=restaurantes_db
 BD_HOST=db
 BD_PORT=5432
+DB_TYPE=postgres
 
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
@@ -31,10 +33,13 @@ POSTGRES_DB=restaurantes_db
 
 KC_BOOTSTRAP_ADMIN_USERNAME=admin
 KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+
+ELASTICSEARCH_ENDPOINT= http://elasticsearch:9200
+
 ```
 Ejecutar contenedores:
 ```
-docker compose up --build
+docker compose --env-file .env.postgres -f docker-compose_postgres.yml up --build
 ```
 ## 📚 Documentación de la API (Swagger)
 ### Acceso a la documentación
@@ -51,12 +56,5 @@ Para los endpoints que requieren el rol `admin`se debe sigue:
 2. **Autorizar:** Haz clic en el botón **"Authorize"** en la parte superior de Swagger.
 3. **Insertar Token:** Pega tu token en el campo de valor.
 4. **Ejecutar:** Ahora puedes usar el botón **"Try it out"** en cualquier ruta protegida.
-
-### Endpoints Principales
-| Método | Ruta | Descripción | Acceso |
-|:-------|:-----|:------------|:-------|
-| POST | `/api/restaurants` | Crea un nuevo restaurante | Admin |
-| POST | `/api/auth/login` | Inicio de sesión y obtención de JWT | Público |
-| GET | `/api/user/me` | Obtener detalles del usuario autenticado | Público |
 
 
