@@ -13,6 +13,8 @@ const orders_routes = require("./routes/orders_routes.js");
 const user_routes = require("./routes/users_routes.js");
 const authentication_routes = require("./routes/authentication_routes.js");
 const swaggerSpec = require("./config/swagger.js");
+const bodyParser = require("body-parser");
+const search_routes = require("../elastic_search_service/routes/search_routes.js");
 
 const error_handler = require("./middleware/error_handler.js");
 
@@ -20,6 +22,7 @@ const app = express();
 
 app.use(express.json()); 
 app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 app.use(
   session({
@@ -45,6 +48,7 @@ app.use("/api", reservations_routes);
 app.use("/api", orders_routes);
 app.use("/api", user_routes);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use("/api/search", search_routes);
 
 // middleware error handler
 app.use(error_handler);
