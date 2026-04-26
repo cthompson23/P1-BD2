@@ -1,17 +1,27 @@
-jest.mock("../../src/config/db.js", () => ({
-  query: jest.fn(),
+jest.mock("../../src/config/database_selector.js", () => ({
+  tables_dao: {
+    getAll: jest.fn(),
+    getByRestaurant: jest.fn(),
+    getById: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    checkAvailability: jest.fn()
+  }
 }));
 
-const pool = require("../../src/config/db.js");
 const controller = require("../../src/controllers/tables_controller.js");
+const { tables_dao } = require("../../src/config/database_selector.js");
 
 const mockRequest = (body = {}, params = {}, query = {}) => ({ body, params, query });
+
 const mockResponse = () => {
   const res = {};
   res.json = jest.fn().mockReturnValue(res);
   res.status = jest.fn().mockReturnValue(res);
   return res;
 };
+
 const mockNext = jest.fn();
 
 describe("Controlador de Mesas", () => {
@@ -19,221 +29,319 @@ describe("Controlador de Mesas", () => {
     jest.clearAllMocks();
   });
 
-  // Obtener todas las mesas
   describe("get_all_tables", () => {
     it("debe obtener todas las mesas", async () => {
       const req = mockRequest();
       const res = mockResponse();
+
       const mockTables = [{ id: 1, numero_mesa: 5 }];
-      pool.query.mockResolvedValue({ rows: mockTables });
+      tables_dao.getAll.mockResolvedValue(mockTables);
+
       await controller.get_all_tables(req, res, mockNext);
+
+      expect(tables_dao.getAll).toHaveBeenCalled();
       expect(res.json).toHaveBeenCalledWith(mockTables);
     });
   });
 
-  // Obtener mesas por restaurante
+  it("get_all_tables maneja error global", async () => {
+  const req = mockRequest();
+  const res = mockResponse();
+
+  tables_dao.getAll.mockRejectedValue(new Error("fail"));
+
+  await controller.get_all_tables(req, res, mockNext);
+
+  expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
+});
+
+
   describe("get_tables_by_restaurant", () => {
     it("debe obtener mesas por restaurante", async () => {
       const req = mockRequest({}, { rest_id: 1 });
       const res = mockResponse();
+
       const mockTables = [{ id: 1, rest_id: 1 }];
-      pool.query.mockResolvedValue({ rows: mockTables });
+      tables_dao.getByRestaurant.mockResolvedValue(mockTables);
+
       await controller.get_tables_by_restaurant(req, res, mockNext);
+
+      expect(tables_dao.getByRestaurant).toHaveBeenCalledWith(1);
       expect(res.json).toHaveBeenCalledWith(mockTables);
+    });
+    
+    it("get_tables_by_restaurant maneja error", async () => {
+      const req = mockRequest({}, { rest_id: 1 });
+      const res = mockResponse();
+
+      tables_dao.getByRestaurant.mockRejectedValue(new Error("DB error"));
+
+      await controller.get_tables_by_restaurant(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
     });
   });
 
-  // Obtener mesa por ID
   describe("get_table_by_id", () => {
     it("debe obtener una mesa por ID", async () => {
       const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
+
       const mockTable = { id: 1 };
-      pool.query.mockResolvedValue({ rows: [mockTable] });
+      tables_dao.getById.mockResolvedValue(mockTable);
+
       await controller.get_table_by_id(req, res, mockNext);
+
+      expect(tables_dao.getById).toHaveBeenCalledWith(1);
       expect(res.json).toHaveBeenCalledWith(mockTable);
     });
 
     it("debe retornar 404 si no existe", async () => {
       const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
-      pool.query.mockResolvedValue({ rows: [] });
+
+      tables_dao.getById.mockResolvedValue(null);
+
       await controller.get_table_by_id(req, res, mockNext);
+
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({ message: "Mesa no encontrada" });
     });
+
+    it("get_table_by_id maneja error", async () => {
+      const req = mockRequest({}, { id: 1 });
+      const res = mockResponse();
+
+      tables_dao.getById.mockRejectedValue(new Error("DB error"));
+
+      await controller.get_table_by_id(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+    });
   });
 
-  // Crear mesa
   describe("create_table", () => {
     it("debe crear una mesa", async () => {
       const req = mockRequest({ rest_id: 1, numero_mesa: 10, capacidad: 4 });
       const res = mockResponse();
-      pool.query
-        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
-        .mockResolvedValueOnce({ rows: [{ ...req.body, disponible: true }] });
+
+      const created = { id: 1, ...req.body, disponible: true };
+
+      tables_dao.create.mockResolvedValue(created);
+
       await controller.create_table(req, res, mockNext);
+
+      expect(tables_dao.create).toHaveBeenCalledWith({...req.body, disponible: true });
       expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith(created);
+    });
+        
+    it("create_table maneja error", async () => {
+      const req = mockRequest({
+        rest_id: 1,
+        numero_mesa: 10,
+        capacidad: 4
+      });
+      const res = mockResponse();
+
+      tables_dao.create.mockRejectedValue(new Error("DB error"));
+
+      await controller.create_table(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
     });
 
-    it("debe retornar 404 si restaurante no existe", async () => {
-      const req = mockRequest({ rest_id: 1 });
+  it("create_table retorna 400 si faltan datos", async () => {
+      const req = mockRequest({ rest_id: 1 }); // incompleto
       const res = mockResponse();
-      pool.query.mockResolvedValueOnce({ rows: [] });
+
       await controller.create_table(req, res, mockNext);
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ message: "Restaurante no encontrado" });
+
+      expect(res.status).toHaveBeenCalledWith(400);
     });
+
+  it("create_table maneja error en DAO", async () => {
+    const req = mockRequest({
+      rest_id: 1,
+      numero_mesa: 10,
+      capacidad: 4
+    });
+
+    const res = mockResponse();
+
+    tables_dao.create.mockRejectedValue(new Error("DB error"));
+
+    await controller.create_table(req, res, mockNext);
+
+    expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
+  });
   });
 
-  // Actualizar mesa
   describe("update_table", () => {
     it("debe actualizar una mesa", async () => {
       const req = mockRequest({ capacidad: 6 }, { id: 1 });
       const res = mockResponse();
-      pool.query
-        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
-        .mockResolvedValueOnce({ rows: [{ id: 1, capacidad: 6 }] });
+      tables_dao.getById.mockResolvedValue({ id: 1 });
+
+      const updated = { id: 1, capacidad: 6 };
+      tables_dao.update.mockResolvedValue(updated);
+
       await controller.update_table(req, res, mockNext);
-      expect(res.json).toHaveBeenCalledWith({ id: 1, capacidad: 6 });
+
+      expect(tables_dao.update).toHaveBeenCalledWith(1, req.body);
+      expect(res.json).toHaveBeenCalledWith(updated);
     });
 
-    it("debe retornar 404 si la mesa no existe", async () => {
+    it("debe retornar 404 si no existe", async () => {
+      const req = mockRequest(
+        { capacidad: 4 }, // 👈 body válido
+        { id: 1 }
+      );
+      const res = mockResponse();
+
+      tables_dao.getById.mockResolvedValue(null);
+
+      await controller.update_table(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+    });
+
+    it("update_table maneja error", async () => {
+      const req = mockRequest({ capacidad: 4 }, { id: 1 });
+      const res = mockResponse();
+
+      tables_dao.getById.mockResolvedValue({ id: 1 });
+      tables_dao.update.mockRejectedValue(new Error("DB error"));
+
+      await controller.update_table(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it("update_table retorna 400 si body vacío", async () => {
       const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
-      pool.query.mockResolvedValueOnce({ rows: [] });
+
       await controller.update_table(req, res, mockNext);
-      expect(res.status).toHaveBeenCalledWith(404);
+
+      expect(res.status).toHaveBeenCalledWith(400);
     });
   });
 
-  // Eliminar mesa
   describe("delete_table", () => {
     it("debe eliminar una mesa", async () => {
       const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
-      pool.query.mockResolvedValue({ rowCount: 1 });
+
+      tables_dao.delete.mockResolvedValue(true);
+
       await controller.delete_table(req, res, mockNext);
-      expect(res.json).toHaveBeenCalledWith({ message: "Mesa eliminada exitosamente" });
+
+      expect(tables_dao.delete).toHaveBeenCalledWith(1);
+      expect(res.json).toHaveBeenCalledWith({
+        message: "Mesa eliminada exitosamente"
+      });
     });
 
     it("debe retornar 404 si no existe", async () => {
       const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
-      pool.query.mockResolvedValue({ rowCount: 0 });
+
+      tables_dao.delete.mockResolvedValue(false);
+
       await controller.delete_table(req, res, mockNext);
+
       expect(res.status).toHaveBeenCalledWith(404);
+    });
+
+    it("delete_table maneja error", async () => {
+      const req = mockRequest({}, { id: 1 });
+      const res = mockResponse();
+
+      tables_dao.delete.mockRejectedValue(new Error("DB error"));
+
+      await controller.delete_table(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it("delete_table maneja error DAO", async () => {
+      const req = mockRequest({}, { id: 1 });
+      const res = mockResponse();
+
+      tables_dao.delete.mockRejectedValue(new Error("fail"));
+
+      await controller.delete_table(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
     });
   });
 
-  // Verificar disponibilidad de mesas
   describe("check_availability", () => {
-    it("debe obtener mesas disponibles con filtros", async () => {
-      const req = mockRequest({}, {}, { rest_id: 1, capacidad: 4, fecha: "2025-01-01", hora: "18:00" });
+    it("debe obtener mesas disponibles", async () => {
+      const req = mockRequest({}, {}, { rest_id: 1 });
       const res = mockResponse();
-      const mockTables = [{ id: 1, capacidad: 4 }];
-      pool.query.mockResolvedValue({ rows: mockTables });
+
+      const mockTables = [{ id: 1 }];
+      tables_dao.checkAvailability.mockResolvedValue(mockTables);
+
       await controller.check_availability(req, res, mockNext);
+
+      expect(tables_dao.checkAvailability).toHaveBeenCalledWith(req.query);
       expect(res.json).toHaveBeenCalledWith(mockTables);
     });
 
-    it("debe funcionar sin filtros", async () => {
+    it("check_availability maneja error", async () => {
+      const req = mockRequest({}, {}, { rest_id: 1 });
+      const res = mockResponse();
+
+      tables_dao.checkAvailability.mockRejectedValue(new Error("DB fail"));
+
+      await controller.check_availability(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
+    });
+
+    it("sin filtros", async () => {
       const req = mockRequest();
       const res = mockResponse();
-      const mockTables = [{ id: 1 }];
-      pool.query.mockResolvedValue({ rows: mockTables });
+
+      tables_dao.checkAvailability.mockResolvedValue([]);
+
       await controller.check_availability(req, res, mockNext);
-      expect(res.json).toHaveBeenCalledWith(mockTables);
+
+      expect(tables_dao.checkAvailability).toHaveBeenCalledWith({});
     });
 
-    it("debe funcionar con solo fecha y hora", async () => {
-      const req = mockRequest({}, {}, { fecha: "2026-04-20", hora: "19:00:00" });
+    it("con todos los filtros", async () => {
+      const req = mockRequest({}, {}, {
+        rest_id: 1,
+        capacidad: 4,
+        fecha: "2026-01-01",
+        hora: "18:00"
+      });
+
       const res = mockResponse();
-      const mockTables = [{ id: 1 }];
-      pool.query.mockResolvedValue({ rows: mockTables });
+
+      tables_dao.checkAvailability.mockResolvedValue([]);
+
       await controller.check_availability(req, res, mockNext);
-      expect(res.json).toHaveBeenCalledWith(mockTables);
+
+      expect(tables_dao.checkAvailability).toHaveBeenCalledWith(req.query);
     });
   });
 });
 
 describe("Errores", () => {
 
-  it("get_all_tables maneja error", async () => {
+  it("maneja errores correctamente", async () => {
     const req = mockRequest();
     const res = mockResponse();
 
-    pool.query.mockRejectedValue(new Error("DB error"));
+    tables_dao.getAll.mockRejectedValue(new Error("DB error"));
 
     await controller.get_all_tables(req, res, mockNext);
 
     expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
   });
-
-  it("get_tables_by_restaurant maneja error", async () => {
-    const req = mockRequest({}, { rest_id: 1 });
-    const res = mockResponse();
-
-    pool.query.mockRejectedValue(new Error("DB error"));
-
-    await controller.get_tables_by_restaurant(req, res, mockNext);
-
-    expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
-  });
-
-  it("get_table_by_id maneja error", async () => {
-    const req = mockRequest({}, { id: 1 });
-    const res = mockResponse();
-
-    pool.query.mockRejectedValue(new Error("DB error"));
-
-    await controller.get_table_by_id(req, res, mockNext);
-
-    expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
-  });
-
-  it("create_table maneja error", async () => {
-    const req = mockRequest({ rest_id: 1 });
-    const res = mockResponse();
-
-    pool.query.mockRejectedValue(new Error("DB error"));
-
-    await controller.create_table(req, res, mockNext);
-
-    expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
-  });
-
-  it("update_table maneja error", async () => {
-    const req = mockRequest({}, { id: 1 });
-    const res = mockResponse();
-
-    pool.query.mockRejectedValue(new Error("DB error"));
-
-    await controller.update_table(req, res, mockNext);
-
-    expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
-  });
-
-  it("delete_table maneja error", async () => {
-    const req = mockRequest({}, { id: 1 });
-    const res = mockResponse();
-
-    pool.query.mockRejectedValue(new Error("DB error"));
-
-    await controller.delete_table(req, res, mockNext);
-
-    expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
-  });
-
-  it("check_availability maneja error", async () => {
-    const req = mockRequest({}, {}, { rest_id: 1 });
-    const res = mockResponse();
-
-    pool.query.mockRejectedValue(new Error("DB error"));
-
-    await controller.check_availability(req, res, mockNext);
-
-    expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
-  });
-
 });

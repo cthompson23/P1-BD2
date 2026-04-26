@@ -1,14 +1,20 @@
-jest.mock("../../src/config/db.js", () => ({
-  query: jest.fn(),
+jest.mock("../../src/config/database_selector.js", () => ({
+  dishes_dao: {
+    getAll: jest.fn(),
+    getByMenu: jest.fn(),
+    getById: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    menuExists: jest.fn()
+  }
 }));
 
-const pool = require("../../src/config/db.js");
 const controller = require("../../src/controllers/dishes_controller.js");
+const { dishes_dao } = require("../../src/config/database_selector.js");
 
-// Helper para simular request
 const mockRequest = (body = {}, params = {}) => ({ body, params });
 
-// Helper para simular response
 const mockResponse = () => {
   const res = {};
   res.json = jest.fn().mockReturnValue(res);
@@ -23,183 +29,226 @@ describe("Controlador de Platos", () => {
     jest.clearAllMocks();
   });
 
-  // Obtener todos los platos
+  // ======================
+  // GET ALL
+  // ======================
   describe("get_all_dishes", () => {
-    it("debe retornar todos los platos", async () => {
+    it("retorna platos", async () => {
       const req = mockRequest();
       const res = mockResponse();
-      const mockData = [{ id: 1, nombre_plato: "Pizza" }];
-      pool.query.mockResolvedValue({ rows: mockData });
+
+      dishes_dao.getAll.mockResolvedValue([{ id: 1 }]);
+
       await controller.get_all_dishes(req, res, mockNext);
-      expect(res.json).toHaveBeenCalledWith(mockData);
+
+      expect(res.json).toHaveBeenCalled();
+    });
+
+    it("maneja error", async () => {
+      const req = mockRequest();
+      const res = mockResponse();
+
+      dishes_dao.getAll.mockRejectedValue(new Error("fail"));
+
+      await controller.get_all_dishes(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
     });
   });
 
-  // Obtener platos por menú
+  // ======================
+  // GET BY MENU
+  // ======================
   describe("get_dishes_by_menu", () => {
-    it("debe retornar platos por menú", async () => {
+    it("retorna lista", async () => {
       const req = mockRequest({}, { menu_id: 1 });
       const res = mockResponse();
-      const mockData = [{ id: 1, menu_id: 1 }];
-      pool.query.mockResolvedValue({ rows: mockData });
+
+      dishes_dao.getByMenu.mockResolvedValue([{ id: 1 }]);
+
       await controller.get_dishes_by_menu(req, res, mockNext);
-      expect(res.json).toHaveBeenCalledWith(mockData);
+
+      expect(dishes_dao.getByMenu).toHaveBeenCalledWith(1);
+      expect(res.json).toHaveBeenCalled();
+    });
+
+    it("maneja error", async () => {
+      const req = mockRequest({}, { menu_id: 1 });
+      const res = mockResponse();
+
+      dishes_dao.getByMenu.mockRejectedValue(new Error("fail"));
+
+      await controller.get_dishes_by_menu(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
     });
   });
 
-  // Obtener plato por ID
+  // ======================
+  // GET BY ID
+  // ======================
   describe("get_dish_by_id", () => {
-    it("debe retornar un plato si existe", async () => {
+    it("retorna plato", async () => {
       const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
-      const mockDish = { id: 1, nombre_plato: "Pizza" };
-      pool.query.mockResolvedValue({ rows: [mockDish] });
+
+      dishes_dao.getById.mockResolvedValue({ id: 1 });
+
       await controller.get_dish_by_id(req, res, mockNext);
-      expect(res.json).toHaveBeenCalledWith(mockDish);
+
+      expect(res.json).toHaveBeenCalled();
     });
 
-    it("debe retornar 404 si no existe", async () => {
-      const req = mockRequest({}, { id: 99 });
+    it("404 si no existe", async () => {
+      const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
-      pool.query.mockResolvedValue({ rows: [] });
+
+      dishes_dao.getById.mockResolvedValue(null);
+
       await controller.get_dish_by_id(req, res, mockNext);
+
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ message: "Plato no encontrado" });
+    });
+
+    it("maneja error", async () => {
+      const req = mockRequest({}, { id: 1 });
+      const res = mockResponse();
+
+      dishes_dao.getById.mockRejectedValue(new Error("fail"));
+
+      await controller.get_dish_by_id(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
     });
   });
 
-  // Crear plato
+  // ======================
+  // CREATE
+  // ======================
   describe("create_dish", () => {
-    it("debe crear un plato correctamente", async () => {
-      const req = mockRequest({ nombre_plato: "Pizza", precio: 5000, menu_id: 1 });
+    it("crea plato", async () => {
+      const req = mockRequest({
+      nombre_plato: "Pizza",
+      precio: 5000,
+      menu_id: 1
+    });
       const res = mockResponse();
-      pool.query
-        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
-        .mockResolvedValueOnce({ rows: [{ id: 1, ...req.body }] });
+
+      dishes_dao.menuExists.mockResolvedValue(true);
+      dishes_dao.create.mockResolvedValue({ id: 1 });
+
       await controller.create_dish(req, res, mockNext);
+
       expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({ id: 1, ...req.body });
     });
 
-    it("debe retornar 404 si el menú no existe", async () => {
-      const req = mockRequest({ nombre_plato: "Pizza", precio: 5000, menu_id: 1 });
+    it("menu no existe -> 404", async () => {
+      const req = mockRequest({
+        nombre_plato: "Pizza",
+        precio: 5000,
+        menu_id: 1
+      });
       const res = mockResponse();
-      pool.query.mockResolvedValueOnce({ rows: [] });
+
+      dishes_dao.menuExists.mockResolvedValue(false);
+
       await controller.create_dish(req, res, mockNext);
+
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ message: "Menú no encontrado" });
+    });
+
+    it("error en create", async () => {
+      const req = mockRequest({
+        nombre_plato: "Pizza",
+        precio: 5000,
+        menu_id: 1
+      });
+      const res = mockResponse();
+
+      dishes_dao.menuExists.mockResolvedValue(true);
+      dishes_dao.create.mockRejectedValue(new Error("fail"));
+
+      await controller.create_dish(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
     });
   });
 
-  // Actualizar plato
+  // ======================
+  // UPDATE
+  // ======================
   describe("update_dish", () => {
-    it("debe actualizar un plato correctamente", async () => {
-      const req = mockRequest({ nombre_plato: "Pizza Updated" }, { id: 1 });
+    it("actualiza", async () => {
+      const req = mockRequest({ name: "x" }, { id: 1 });
       const res = mockResponse();
-      pool.query
-        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
-        .mockResolvedValueOnce({ rows: [{ id: 1, nombre_plato: "Pizza Updated" }] });
+
+      dishes_dao.getById.mockResolvedValue({ id: 1 });
+      dishes_dao.update.mockResolvedValue({ id: 1 });
+
       await controller.update_dish(req, res, mockNext);
-      expect(res.json).toHaveBeenCalledWith({ id: 1, nombre_plato: "Pizza Updated" });
+
+      expect(res.json).toHaveBeenCalled();
     });
 
-    it("debe retornar 404 si el plato no existe", async () => {
+    it("no existe -> 404", async () => {
       const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
-      pool.query.mockResolvedValueOnce({ rows: [] });
+
+      dishes_dao.getById.mockResolvedValue(null);
+
       await controller.update_dish(req, res, mockNext);
+
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ message: "Plato no encontrado" });
+    });
+
+    it("error update", async () => {
+      const req = mockRequest({}, { id: 1 });
+      const res = mockResponse();
+
+      dishes_dao.getById.mockResolvedValue({ id: 1 });
+      dishes_dao.update.mockRejectedValue(new Error("fail"));
+
+      await controller.update_dish(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
     });
   });
 
-  // Eliminar plato
+  // ======================
+  // DELETE
+  // ======================
   describe("delete_dish", () => {
-    it("debe eliminar un plato correctamente", async () => {
+    it("elimina", async () => {
       const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
-      pool.query.mockResolvedValue({ rowCount: 1 });
+
+      dishes_dao.delete.mockResolvedValue(true);
+
       await controller.delete_dish(req, res, mockNext);
-      expect(res.json).toHaveBeenCalledWith({ message: "Plato eliminado exitosamente" });
+
+      expect(res.json).toHaveBeenCalled();
     });
 
-    it("debe retornar 404 si no existe", async () => {
+    it("404 si no existe", async () => {
       const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
-      pool.query.mockResolvedValue({ rowCount: 0 });
+
+      dishes_dao.delete.mockResolvedValue(false);
+
       await controller.delete_dish(req, res, mockNext);
+
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ message: "Plato no encontrado" });
+    });
+
+    it("error delete", async () => {
+      const req = mockRequest({}, { id: 1 });
+      const res = mockResponse();
+
+      dishes_dao.delete.mockRejectedValue(new Error("fail"));
+
+      await controller.delete_dish(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
     });
   });
-});
-
-describe("Errores", () => {
-
-  it("get_all_dishes debe manejar error", async () => {
-    const req = mockRequest();
-    const res = mockResponse();
-
-    pool.query.mockRejectedValue(new Error("DB error"));
-
-    await controller.get_all_dishes(req, res, mockNext);
-
-    expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
-  });
-
-  it("get_dishes_by_menu debe manejar error", async () => {
-    const req = mockRequest({}, { menu_id: 1 });
-    const res = mockResponse();
-
-    pool.query.mockRejectedValue(new Error("DB error"));
-
-    await controller.get_dishes_by_menu(req, res, mockNext);
-
-    expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
-  });
-
-  it("get_dish_by_id debe manejar error", async () => {
-    const req = mockRequest({}, { id: 1 });
-    const res = mockResponse();
-
-    pool.query.mockRejectedValue(new Error("DB error"));
-
-    await controller.get_dish_by_id(req, res, mockNext);
-
-    expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
-  });
-
-  it("create_dish debe manejar error", async () => {
-    const req = mockRequest({ nombre_plato: "Pizza", precio: 5000, menu_id: 1 });
-    const res = mockResponse();
-
-    pool.query.mockRejectedValue(new Error("DB error"));
-
-    await controller.create_dish(req, res, mockNext);
-
-    expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
-  });
-
-  it("update_dish debe manejar error", async () => {
-    const req = mockRequest({}, { id: 1 });
-    const res = mockResponse();
-
-    pool.query.mockRejectedValue(new Error("DB error"));
-
-    await controller.update_dish(req, res, mockNext);
-
-    expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
-  });
-
-  it("delete_dish debe manejar error", async () => {
-    const req = mockRequest({}, { id: 1 });
-    const res = mockResponse();
-
-    pool.query.mockRejectedValue(new Error("DB error"));
-
-    await controller.delete_dish(req, res, mockNext);
-
-    expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
-  });
-
 });

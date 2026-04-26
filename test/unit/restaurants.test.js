@@ -1,17 +1,26 @@
-jest.mock("../../src/config/db.js", () => ({
-  query: jest.fn(),
+jest.mock("../../src/config/database_selector.js", () => ({
+  restaurants_dao: {
+    create: jest.fn(),
+    getAll: jest.fn(),
+    getById: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn()
+  }
 }));
 
-const pool = require("../../src/config/db.js");
 const controller = require("../../src/controllers/restaurants_controller.js");
+const { restaurants_dao } = require("../../src/config/database_selector.js");
 
+// mocks básicos
 const mockRequest = (body = {}, params = {}) => ({ body, params });
+
 const mockResponse = () => {
   const res = {};
   res.json = jest.fn().mockReturnValue(res);
   res.status = jest.fn().mockReturnValue(res);
   return res;
 };
+
 const mockNext = jest.fn();
 
 describe("Controlador de Restaurantes", () => {
@@ -19,89 +28,129 @@ describe("Controlador de Restaurantes", () => {
     jest.clearAllMocks();
   });
 
-  // Crear restaurante
+  // CREATE
   describe("create_restaurant", () => {
     it("debe crear un restaurante", async () => {
-      const req = mockRequest({ nombre_rest: "Test", ubicacion: "CR", correo_rest: "test@test.com", telefono_rest: "1234" });
+      const req = mockRequest({
+        nombre_rest: "Test",
+        ubicacion: "CR",
+        correo_rest: "test@test.com",
+        telefono_rest: "1234"
+      });
       const res = mockResponse();
-      pool.query.mockResolvedValue({ rows: [req.body] });
+
+      restaurants_dao.create.mockResolvedValue(req.body);
+
       await controller.create_restaurant(req, res, mockNext);
+
+      expect(restaurants_dao.create).toHaveBeenCalledWith(req.body);
       expect(res.json).toHaveBeenCalledWith(req.body);
     });
   });
 
-  // Obtener todos los restaurantes
+  // GET ALL
   describe("get_all_restaurants", () => {
     it("debe obtener todos los restaurantes", async () => {
       const req = mockRequest();
       const res = mockResponse();
+
       const mockData = [{ id: 1, nombre_rest: "Test" }];
-      pool.query.mockResolvedValue({ rows: mockData });
+      restaurants_dao.getAll.mockResolvedValue(mockData);
+
       await controller.get_all_restaurants(req, res, mockNext);
+
+      expect(restaurants_dao.getAll).toHaveBeenCalled();
       expect(res.json).toHaveBeenCalledWith(mockData);
     });
   });
 
-  // Obtener restaurante por ID
+  // GET BY ID
   describe("get_restaurant_by_id", () => {
     it("debe obtener un restaurante por ID", async () => {
       const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
+
       const mockRestaurant = { id: 1, nombre_rest: "Test" };
-      pool.query.mockResolvedValue({ rows: [mockRestaurant] });
+      restaurants_dao.getById.mockResolvedValue(mockRestaurant);
+
       await controller.get_restaurant_by_id(req, res, mockNext);
+
+      expect(restaurants_dao.getById).toHaveBeenCalledWith(1);
       expect(res.json).toHaveBeenCalledWith(mockRestaurant);
     });
 
     it("debe retornar 404 si no existe", async () => {
       const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
-      pool.query.mockResolvedValue({ rows: [] });
+
+      restaurants_dao.getById.mockResolvedValue(null);
+
       await controller.get_restaurant_by_id(req, res, mockNext);
+
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ message: "Restaurante no encontrado" });
+      expect(res.json).toHaveBeenCalledWith({
+        message: "Restaurante no encontrado"
+      });
     });
   });
 
-  // Actualizar restaurante
+  // UPDATE
   describe("update_restaurant", () => {
     it("debe actualizar un restaurante", async () => {
       const req = mockRequest({ nombre_rest: "Updated" }, { id: 1 });
       const res = mockResponse();
-      pool.query.mockResolvedValue({ rows: [{ id: 1, ...req.body }] });
+
+      const updated = { id: 1, ...req.body };
+      restaurants_dao.update.mockResolvedValue(updated);
+
       await controller.update_restaurant(req, res, mockNext);
-      expect(res.json).toHaveBeenCalledWith({ id: 1, ...req.body });
+
+      expect(restaurants_dao.update).toHaveBeenCalledWith(1, req.body);
+      expect(res.json).toHaveBeenCalledWith(updated);
     });
   });
 
-  // Eliminar restaurante
+  // DELETE
   describe("delete_restaurant", () => {
     it("debe eliminar un restaurante", async () => {
       const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
-      pool.query.mockResolvedValue({ rowCount: 1 });
+
+      restaurants_dao.delete.mockResolvedValue(true);
+
       await controller.delete_restaurant(req, res, mockNext);
-      expect(res.json).toHaveBeenCalledWith({ message: "Restaurante eliminado exitosamente" });
+
+      expect(restaurants_dao.delete).toHaveBeenCalledWith(1);
+      expect(res.json).toHaveBeenCalledWith({
+        message: "Restaurante eliminado exitosamente"
+      });
     });
 
     it("debe retornar 404 si no existe", async () => {
       const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
-      pool.query.mockResolvedValue({ rowCount: 0 });
+
+      restaurants_dao.delete.mockResolvedValue(false);
+
       await controller.delete_restaurant(req, res, mockNext);
+
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ message: "Restaurante no encontrado" });
+      expect(res.json).toHaveBeenCalledWith({
+        message: "Restaurante no encontrado"
+      });
     });
   });
 });
 
+
+// ERRORES
 describe("Errores", () => {
 
   it("create_restaurant debe manejar error", async () => {
     const req = mockRequest({ nombre_rest: "Test" });
     const res = mockResponse();
 
-    pool.query.mockRejectedValue(new Error("DB error"));
+    restaurants_dao.create.mockRejectedValue(new Error("DB error"));
 
     await controller.create_restaurant(req, res, mockNext);
 
@@ -112,7 +161,7 @@ describe("Errores", () => {
     const req = mockRequest();
     const res = mockResponse();
 
-    pool.query.mockRejectedValue(new Error("DB error"));
+    restaurants_dao.getAll.mockRejectedValue(new Error("DB error"));
 
     await controller.get_all_restaurants(req, res, mockNext);
 
@@ -123,7 +172,7 @@ describe("Errores", () => {
     const req = mockRequest({}, { id: 1 });
     const res = mockResponse();
 
-    pool.query.mockRejectedValue(new Error("DB error"));
+    restaurants_dao.getById.mockRejectedValue(new Error("DB error"));
 
     await controller.get_restaurant_by_id(req, res, mockNext);
 
@@ -134,7 +183,7 @@ describe("Errores", () => {
     const req = mockRequest({}, { id: 1 });
     const res = mockResponse();
 
-    pool.query.mockRejectedValue(new Error("DB error"));
+    restaurants_dao.update.mockRejectedValue(new Error("DB error"));
 
     await controller.update_restaurant(req, res, mockNext);
 
@@ -145,7 +194,7 @@ describe("Errores", () => {
     const req = mockRequest({}, { id: 1 });
     const res = mockResponse();
 
-    pool.query.mockRejectedValue(new Error("DB error"));
+    restaurants_dao.delete.mockRejectedValue(new Error("DB error"));
 
     await controller.delete_restaurant(req, res, mockNext);
 
