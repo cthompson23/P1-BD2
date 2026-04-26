@@ -69,9 +69,7 @@ exports.create_dish = async (req, res, next) => {
 
     res.status(201).json(newDish);
   } catch (error) {
-    res.status(400).json({
-      message: error.message
-    });
+    next(error);
   }
 };
 
@@ -105,9 +103,7 @@ exports.update_dish = async (req, res, next) => {
 
     res.json(updated);
   } catch (error) {
-    res.status(400).json({
-      message: error.message
-    });
+    next(error);
   }
 };
 
