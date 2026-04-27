@@ -70,10 +70,10 @@ describe("Controlador de Menús", () => {
   // ======================
   describe("get_menu_by_id", () => {
     it("debe retornar un menú si existe", async () => {
-      const req = mockRequest({}, { id: 1 });
+      const req = { params: { id: 1 } };
       const res = mockResponse();
 
-      const mockMenu = { id: 1 };
+      const mockMenu = [{ id: 1, rest_id: 1 }];
       menus_dao.getById.mockResolvedValue(mockMenu);
 
       await controller.get_menu_by_id(req, res, mockNext);
