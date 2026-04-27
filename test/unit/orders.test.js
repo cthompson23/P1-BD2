@@ -152,7 +152,7 @@ describe("Controlador de Pedidos", () => {
   });
 
   it("update_order_status retorna 404 si no existe", async () => {
-    const req = mockRequestWithAuth({ estado: "confirmado" }, { id: 1 });
+    const req = mockRequestWithAuth({ estado: "pendiente" }, { id: 1 });
     const res = mockResponse();
 
     orders_dao.updateStatus.mockResolvedValue(null);
