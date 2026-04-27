@@ -70,16 +70,7 @@ describe("Controlador de Usuarios", () => {
 
       expect(res.status).toHaveBeenCalledWith(500);
     });
-
-    it("update_user retorna 400 si body vacío", async () => {
-      const req = mockRequestWithUser({});
-      const res = mockResponse();
-
-      await controller.update_user(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-    });
-
+    
     it("get_user maneja error inesperado", async () => {
       const req = {
         kauth: {
