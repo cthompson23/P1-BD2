@@ -52,7 +52,7 @@ describe("Controlador de Menús", () => {
   // ======================
   describe("get_menus_by_restaurant", () => {
     it("debe retornar menús por restaurante", async () => {
-      const req ={ params: { id: 1 }};
+      const req ={ params: { rest_id :1 }};
       const res = mockResponse();
 
       const mockMenus = [{ id: 1, rest_id: 1 }];
