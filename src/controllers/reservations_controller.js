@@ -54,13 +54,21 @@ exports.cancel_reservation = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const result = await reservations_dao.cancel(id);
+    const reservation = await reservations_dao.getById(id);
 
-    if (!result) {
+    if (!reservation) {
       return res.status(404).json({
         message: "Reservación no encontrada"
       });
     }
+
+    if (reservation.estado === "cancelada") {
+      return res.status(400).json({
+        message: "Reservación ya cancelada"
+      });
+    }
+
+    await reservations_dao.cancel(id);
 
     res.json({
       message: "Reservación cancelada exitosamente"

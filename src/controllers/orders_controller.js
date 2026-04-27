@@ -67,6 +67,11 @@ exports.update_order_status = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { estado } = req.body;
+    const estadosValidos = ["pendiente", "en_proceso", "completado", "cancelado"];
+
+    if (!estado || !estadosValidos.includes(estado)) {
+      return res.status(400).json({ message: "Estado inválido" });
+    }
 
     const updated = await orders_dao.updateStatus(id, estado);
 
