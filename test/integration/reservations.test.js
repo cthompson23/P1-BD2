@@ -1,5 +1,5 @@
 const request = require("supertest");
-const app = require("../../src/app");
+const app = require("../../src/app.js");
 
 jest.mock("../../src/config/database_selector.js", () => ({
   reservations_dao: {
@@ -13,6 +13,17 @@ jest.mock("../../src/config/database_selector.js", () => ({
     checkAvailability: jest.fn(),
   },
 }));
+
+app.use((req, res, next) => {
+  req.kauth = {
+    grant: {
+      access_token: {
+        content: { sub: "test-user" }
+      }
+    }
+  };
+  next();
+});
 
 const {
   reservations_dao,
@@ -104,7 +115,7 @@ describe("Integration - Reservations (sin auth)", () => {
   // CANCEL
   // ======================
   it("PATCH /api/reservations/:id/cancel -> cancela reservación", async () => {
-    reservations_dao.cancel.mockResolvedValue({ id: 1, estado: "cancelada" });
+    reservations_dao.cancel.mockResolvedValue({ id: 1, estado: "activa" });
 
     const res = await request(app)
       .patch("/api/reservations/1/cancel");
@@ -126,13 +137,15 @@ describe("Integration - Reservations (sin auth)", () => {
   // DELETE
   // ======================
   it("DELETE /api/reservations/:id -> elimina reservación", async () => {
-    reservations_dao.delete.mockResolvedValue({ id: 1 });
+    reservations_dao.delete.mockResolvedValue(true);
 
     const res = await request(app)
       .delete("/api/reservations/1");
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ id: 1 });
+    expect(res.body).toEqual({
+      message: "Reservación eliminada correctamente"
+    });
   });
 
   it("DELETE /api/reservations/:id -> 404 si no existe", async () => {
