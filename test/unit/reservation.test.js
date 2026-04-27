@@ -9,7 +9,10 @@ jest.mock("../../src/config/database_selector.js", () => ({
 }));
 
 const controller = require("../../src/controllers/reservations_controller.js");
-const { reservations_dao } = require("../../src/config/database_selector.js");
+const {
+  reservations_dao,
+  tables_dao
+} = require("../../src/config/database_selector.js");
 
 const mockRequest = (body = {}, params = {}, user = "user123") => ({
   body,
@@ -94,7 +97,7 @@ describe("Controlador de Reservaciones", () => {
     const res = mockResponse();
 
     const created = { id: 1 };
-    
+
     tables_dao.checkAvailability.mockResolvedValue(true);
     reservations_dao.create.mockResolvedValue(created);
 
