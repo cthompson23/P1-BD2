@@ -94,7 +94,8 @@ describe("Controlador de Reservaciones", () => {
     const res = mockResponse();
 
     const created = { id: 1 };
-
+    
+    tables_dao.checkAvailability.mockResolvedValue(true);
     reservations_dao.create.mockResolvedValue(created);
 
     await controller.create_reservation(req, res, mockNext);

@@ -117,11 +117,13 @@ describe("Integration - Reservations (sin auth)", () => {
   it("PATCH /api/reservations/:id/cancel -> cancela reservación", async () => {
     reservations_dao.cancel.mockResolvedValue({ id: 1, estado: "activa" });
 
+    reservations_dao.cancel.mockResolvedValue(true);
+
     const res = await request(app)
       .patch("/api/reservations/1/cancel");
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ id: 1, estado: "cancelada" });
+    expect(res.body).toEqual({ message: "Reservación cancelada exitosamente" });
   });
 
   it("PATCH /api/reservations/:id/cancel -> 404 si no existe", async () => {
