@@ -129,16 +129,16 @@ describe("Controlador de Pedidos", () => {
   // UPDATE STATUS
   // ======================
   it("update_order_status actualiza", async () => {
-    const req = mockRequestWithAuth({ estado: "confirmado" }, { id: 1 });
+    const req = mockRequestWithAuth({ estado: "en_proceso" }, { id: 1 });
     const res = mockResponse();
 
-    const updated = { id: 1, estado: "confirmado" };
+    const updated = { id: 1, estado: "en_proceso" };
 
     orders_dao.updateStatus.mockResolvedValue(updated);
 
     await controller.update_order_status(req, res, mockNext);
 
-    expect(orders_dao.updateStatus).toHaveBeenCalledWith(1, "confirmado");
+    expect(orders_dao.updateStatus).toHaveBeenCalledWith(1, "en_proceso");
     expect(res.json).toHaveBeenCalledWith(updated);
   });
 
