@@ -74,6 +74,10 @@ exports.create_table = async (req, res, next) => {
 // Actualizar mesa
 exports.update_table = async (req, res, next) => {
   try {
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({ message: "Body vacío" });
+    }
+
     const { id } = req.params;
 
     const existing = await tables_dao.getById(id);
