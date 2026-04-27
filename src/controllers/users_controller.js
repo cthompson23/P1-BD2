@@ -182,6 +182,15 @@ exports.get_user = async (req, res) => {
 
 exports.update_user = async (req, res) => {
   try {
+    if (
+      !req.kauth ||
+      !req.kauth.grant ||
+      !req.kauth.grant.access_token ||
+      !req.kauth.grant.access_token.content
+    ) {
+      return res.status(401).json({ message: "No autenticado" });
+    }
+
     const user = req.kauth.grant.access_token.content;
 
     if (!user) {
