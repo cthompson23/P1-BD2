@@ -13,7 +13,7 @@ exports.get_all_menus = async (req, res, next) => {
 exports.get_menus_by_restaurant = async (req, res, next) => {
   try {
     const { rest_id } = req.params;
-    const menus = await menu_dao.getByRestaurant(rest_id);
+    const menus = await menus_dao.getByRestaurant(rest_id);
     res.json(menus);
   } catch (error) {
     next(error);

@@ -14,7 +14,6 @@ const user_routes = require("./routes/users_routes.js");
 const authentication_routes = require("./routes/authentication_routes.js");
 const swaggerSpec = require("./config/swagger.js");
 const bodyParser = require("body-parser");
-const search_routes = require("../elastic_search_service/routes/search_routes.js");
 
 const error_handler = require("./middleware/error_handler.js");
 
@@ -36,6 +35,8 @@ app.use(
 // Keycloak middleware solo si no es test
 if (process.env.NODE_ENV !== "test") {
   app.use(keycloak.middleware());
+  const search_routes = require("../elastic_search_service/routes/search_routes.js");
+  app.use("/search", search_routes);
 }
 
 // Rutas
@@ -48,7 +49,7 @@ app.use("/api", reservations_routes);
 app.use("/api", orders_routes);
 app.use("/api", user_routes);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.use("/api/search", search_routes);
+
 
 // middleware error handler
 app.use(error_handler);
