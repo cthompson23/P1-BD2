@@ -1,0 +1,31 @@
+//DAO ABSTRACT CLASS
+class tables_dao {
+  async getAll() { 
+    throw new Error("Not implemented"); 
+  }
+
+  async getByRestaurant(rest_id) { 
+    throw new Error("Not implemented"); 
+  }
+
+  async getById(id) { 
+    throw new Error("Not implemented"); 
+  }
+
+  async create(data) { 
+    throw new Error("Not implemented"); 
+  }
+
+  async update(id, data) { 
+    throw new Error("Not implemented"); 
+  }
+  async delete(id) { 
+    throw new Error("Not implemented"); 
+  }
+
+  async checkAvailability(filters) { 
+    throw new Error("Not implemented"); 
+  }
+}
+
+module.exports = tables_dao;
