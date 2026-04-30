@@ -84,7 +84,7 @@ services:
       - "5002:${PORT}"
     volumes:
       - .:/usr/local/app
-    command: ["node", "server.js"]
+    command: ["node", "elastic_search_service/server.js"]
 
   nginx:
     image: nginx:1.29.8
@@ -92,7 +92,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.config
+      - ./nginx.conf:/etc/nginx/nginx.conf
     depends_on:
       - api
       - search  
