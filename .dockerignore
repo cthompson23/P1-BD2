@@ -1,0 +1,17 @@
+node_modules# Tests y coverage
+coverage/
+.nyc_output/
+
+# Dependencias innecesarias
+node_modules/
+npm-debug.log
+
+# Archivos de desarrollo
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+
+# Entorno
+.env
+.env.*
