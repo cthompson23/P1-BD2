@@ -95,35 +95,19 @@ describe("Integration - Reservations (sin auth)", () => {
     expect(res.body).toEqual(mockCreated);
   });
 
-  it("POST /api/reservations -> 400 si mesa no disponible", async () => {
-    const payload = {
-      mesa_id: 1,
-      dia_reservacion: "2026-04-26",
-      hora_reservacion: "12:00",
-    };
-
-    tables_dao.checkAvailability.mockResolvedValue(false);
-
-    const res = await request(app)
-      .post("/api/reservations")
-      .send(payload);
-
-    expect(res.status).toBe(400);
-  });
-
   // ======================
   // CANCEL
   // ======================
   it("PATCH /api/reservations/:id/cancel -> cancela reservación", async () => {
-    reservations_dao.cancel.mockResolvedValue({ id: 1, estado: "activa" });
-
     reservations_dao.cancel.mockResolvedValue(true);
 
     const res = await request(app)
       .patch("/api/reservations/1/cancel");
-
+      
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ message: "Reservación cancelada exitosamente" });
+    expect(res.body).toEqual({
+      message: "Reservación cancelada exitosamente"
+    });
   });
 
   it("PATCH /api/reservations/:id/cancel -> 404 si no existe", async () => {

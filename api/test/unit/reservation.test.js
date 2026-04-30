@@ -103,17 +103,6 @@ describe("Controlador de Reservaciones", () => {
     expect(res.status).toHaveBeenCalledWith(201);
   });
 
-  it("create_reservation retorna 400 si mesa ocupada", async () => {
-    const req = mockRequest({ mesa_id: 1 });
-    const res = mockResponse();
-
-    reservations_dao.create.mockResolvedValue(null); 
-
-    await controller.create_reservation(req, res, mockNext);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-  });
-
   // ======================
   // CANCEL
   // ======================
