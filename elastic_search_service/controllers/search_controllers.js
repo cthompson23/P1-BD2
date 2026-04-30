@@ -1,6 +1,6 @@
 const dao = require("../dao/search_elastic_dao.js");
-const { dishes_dao } = require("../../src/config/database_selector.js");
-const client = require("../../src/config/elastic.js");
+const { dishes_dao } = require("../../api/src/config/database_selector.js");
+const client = require("../../api/src/config/elastic.js");
 
 exports.ping = async (req, res) => {
   try {

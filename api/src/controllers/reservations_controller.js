@@ -36,18 +36,6 @@ exports.create_reservation = async (req, res, next) => {
     const user = req.kauth.grant.access_token.content;
     const dto = new reservation_dto(req.body);
 
-    const available = await tables_dao.checkAvailability({
-      mesa_id: dto.mesa_id,
-      fecha: dto.dia_reservacion,
-      hora: dto.hora_reservacion
-    });
-
-    if (!available) {
-      return res.status(400).json({
-        message: "Mesa no disponible"
-      });
-    }
-
     const reservation = await reservations_dao.create({
       ...dto,
       usuario_id: user.sub
@@ -55,9 +43,7 @@ exports.create_reservation = async (req, res, next) => {
 
     res.status(201).json(reservation);
   } catch (error) {
-    res.status(400).json({
-      message: error.message
-    });
+    next(error);
   }
 };
 

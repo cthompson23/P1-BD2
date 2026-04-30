@@ -35,7 +35,7 @@ app.use(
 // Keycloak middleware solo si no es test
 if (process.env.NODE_ENV !== "test") {
   app.use(keycloak.middleware());
-  const search_routes = require("../elastic_search_service/routes/search_routes.js");
+  const search_routes = require("../../elastic_search_service/routes/search_routes.js");
   app.use("/search", search_routes);
 }
 

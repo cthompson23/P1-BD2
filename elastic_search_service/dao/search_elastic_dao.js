@@ -1,5 +1,5 @@
-const client = require("../../src/config/elastic.js");
-const { dishes_dao } = require("../../src/config/database_selector.js");
+const client = require("../../api/src/config/elastic.js");
+const { dishes_dao } = require("../../api/src/config/database_selector.js");
 
 exports.ping = async () => {
   const result = await client.info();
