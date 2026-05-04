@@ -14,6 +14,7 @@ jest.mock("../../src/config/redis.js", () => ({
   get: jest.fn(),
   setEx: jest.fn(),
   connect: jest.fn(),
+  del: jest.fn()
 }));
 
 jest.mock("../../src/middleware/cache.js", () => {
