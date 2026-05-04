@@ -1,5 +1,6 @@
 const { dishes_dao } = require("../config/database_selector.js");
 const dish_dto = require("../dto/dishes_dto.js");
+const redisClient = require("../config/redis.js");
 
 // Obtener todos los platos
 exports.get_all_dishes = async (req, res, next) => {
@@ -57,6 +58,7 @@ exports.create_dish = async (req, res, next) => {
     // Validar menú si el DAO lo soporta
     if (typeof dishes_dao.menuExists === "function") {
       const exists = await dishes_dao.menuExists(dto.menu_id);
+      
 
       if (!exists) {
         return res.status(404).json({
@@ -66,6 +68,9 @@ exports.create_dish = async (req, res, next) => {
     }
 
     const newDish = await dishes_dao.create(dto);
+
+    await redisClient.del("all_dishes");
+    await redisClient.del(`dish_${newDish.id}`);
 
     res.status(201).json(newDish);
   } catch (error) {

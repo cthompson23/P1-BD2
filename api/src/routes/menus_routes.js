@@ -1,6 +1,7 @@
 const express = require("express");
 const { keycloak } = require("../config/keycloak.js");
 const { hasRole } = require("../middleware/auth.js");
+const cache = require("../middleware/cache.js");
 const router = express.Router();
 
 const {
@@ -29,7 +30,7 @@ const {
  *       200:
  *         description: Lista de menús
  */
-router.get("/menus", get_all_menus);
+router.get("/menus", cache(() => "all_menus", 120), get_all_menus);
 
 /**
  * @swagger
@@ -49,7 +50,7 @@ router.get("/menus", get_all_menus);
  *       404:
  *         description: Menú no encontrado
  */
-router.get("/menus/:id", get_menu_by_id);
+router.get("/menus/:id", cache((req) => `menu_${req.params.id}`, 120), get_menu_by_id);
 
 /**
  * @swagger

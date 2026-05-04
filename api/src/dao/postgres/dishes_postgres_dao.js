@@ -5,7 +5,7 @@ class dish_postgres_dao extends dish_dao{
 
   async getAll() {
     const result = await pool.query(`
-      SELECT p.*, m.nombre_menu, r.nombre_rest 
+      SELECT p.*, m.nombre_menu, r.nombre_rest
       FROM platos p 
       JOIN menus m ON p.menu_id = m.id 
       JOIN restaurantes r ON m.rest_id = r.id 
@@ -42,10 +42,10 @@ class dish_postgres_dao extends dish_dao{
     return result.rows.length > 0;
   }
 
-  async create({ nombre_plato, precio, menu_id }) {
+  async create({ nombre_plato, precio, menu_id, descripcion }) {
     const result = await pool.query(
-      "INSERT INTO platos (nombre_plato, precio, menu_id) VALUES ($1, $2, $3) RETURNING *",
-      [nombre_plato, precio, menu_id]
+      "INSERT INTO platos (nombre_plato, precio, menu_id, descripcion) VALUES ($1, $2, $3, $4) RETURNING *",
+      [nombre_plato, precio, menu_id, descripcion]
     );
     return result.rows[0];
   }

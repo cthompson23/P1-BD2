@@ -1,5 +1,5 @@
 class dish_dto {
-  constructor({ nombre_plato, precio, menu_id }) {
+  constructor({ nombre_plato, precio, menu_id, descripcion }) {
 
     if (nombre_plato !== undefined && typeof nombre_plato !== "string") {
       throw new Error("nombre_plato debe ser un string");
@@ -12,6 +12,7 @@ class dish_dto {
     this.nombre_plato = nombre_plato; 
     this.precio = precio;
     this.menu_id = menu_id;
+    this.descripcion = descripcion;
   }
 }
 

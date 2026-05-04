@@ -1,5 +1,6 @@
 const { menus_dao } = require("../config/database_selector.js");
 const menu_dto = require("../dto/menus_dto.js");
+const redisClient = require("../config/redis.js");
 
 exports.get_all_menus = async (req, res, next) => {
   try {
@@ -46,6 +47,9 @@ exports.create_menu = async (req, res, next) => {
     }
 
     const menu = await menus_dao.create(dto);
+
+    await redisClient.del("all_menus");
+    await redisClient.del(`menus_rest_${req.body.rest_id}`);
 
     res.status(201).json(menu);
   } catch (error) {

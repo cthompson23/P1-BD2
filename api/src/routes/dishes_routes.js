@@ -1,6 +1,7 @@
 const express = require("express");
 const { keycloak } = require("../config/keycloak.js");
 const { hasRole } = require("../middleware/auth.js");
+const cache = require("../middleware/cache.js");
 const router = express.Router();
 
 const {
@@ -29,7 +30,7 @@ const {
  *       200:
  *         description: Lista de platos
  */
-router.get("/dishes", get_all_dishes);
+router.get("/dishes", cache(() => "all_dishes", 120), get_all_dishes);
 
 /**
  * @swagger
@@ -49,7 +50,7 @@ router.get("/dishes", get_all_dishes);
  *       404:
  *         description: Plato no encontrado
  */
-router.get("/dishes/:id", get_dish_by_id);
+router.get("/dishes/:id", cache((req) => `dish_${req.params.id}`, 120), get_dish_by_id);
 
 /**
  * @swagger

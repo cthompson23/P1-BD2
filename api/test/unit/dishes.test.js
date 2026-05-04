@@ -10,6 +10,10 @@ jest.mock("../../src/config/database_selector.js", () => ({
   }
 }));
 
+jest.mock("../../src/middleware/cache.js", () => {
+  return () => (req, res, next) => next();
+});
+
 const controller = require("../../src/controllers/dishes_controller.js");
 const { dishes_dao } = require("../../src/config/database_selector.js");
 
