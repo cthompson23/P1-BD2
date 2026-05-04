@@ -96,6 +96,11 @@ services:
     depends_on:
       - api
       - search  
+  
+  redis:
+    image: redis:8.6
+    ports:
+      - "6379:6379"
 
 volumes:
   esdata:

@@ -25,7 +25,8 @@ CREATE TABLE platos (
 	id SERIAL PRIMARY KEY,
 	nombre_plato VARCHAR(50) NOT NULL,
 	precio NUMERIC(10,2) NOT NULL,
-	menu_id INTEGER REFERENCES menus(id) ON DELETE CASCADE
+	menu_id INTEGER REFERENCES menus(id) ON DELETE CASCADE,
+	descripcion TEXT
 );
 
 CREATE TABLE mesas (
