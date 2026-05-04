@@ -13,6 +13,17 @@ jest.mock("../../src/config/database_selector.js", () => ({
   },
 }));
 
+jest.mock("../../src/config/redis.js", () => ({
+  get: jest.fn(),
+  setEx: jest.fn(),
+  connect: jest.fn(),
+  del: jest.fn(),
+}));
+
+jest.mock("../../src/middleware/cache.js", () => {
+  return () => (req, res, next) => next();
+});
+
 const { dishes_dao } = require("../../src/config/database_selector.js");
 
 describe("Integration - Dishes", () => {
