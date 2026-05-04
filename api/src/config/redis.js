@@ -5,11 +5,18 @@ const client = redis.createClient({
 });
 
 client.on("error", (err) => {
-  console.error("Redis error:", err);
+  if (process.env.NODE_ENV !== "test") {
+    console.error("Redis error:", err);
+  }
 });
 
-(async () => {
-  await client.connect();
-})();
+async function connectRedis() {
+  if (process.env.NODE_ENV !== "test") {
+    await client.connect();
+  }
+}
+
+// solo conectar si NO es test
+connectRedis();
 
 module.exports = client;

@@ -10,12 +10,18 @@ jest.mock("../../src/config/database_selector.js", () => ({
   }
 }));
 
-jest.mock("../../src/middleware/cache.js", () => {
-  return () => (req, res, next) => next();
-});
+jest.mock("../../src/config/redis.js", () => ({
+  get: jest.fn(),
+  setEx: jest.fn(),
+  connect: jest.fn(),
+}));
 
 const controller = require("../../src/controllers/menus_controller.js");
 const { menus_dao } = require("../../src/config/database_selector.js");
+
+jest.mock("../../src/middleware/cache.js", () => {
+  return () => (req, res, next) => next();
+});
 
 const mockRequest = (body = {}, params = {}) => ({ body, params });
 
