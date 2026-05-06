@@ -1,6 +1,5 @@
 const { menus_dao } = require("../config/database_selector.js");
 const menu_dto = require("../dto/menus_dto.js");
-const redisClient = require("../config/redis.js");
 
 exports.get_all_menus = async (req, res, next) => {
   try {
@@ -48,9 +47,6 @@ exports.create_menu = async (req, res, next) => {
 
     const menu = await menus_dao.create(dto);
 
-    await redisClient.del("all_menus");
-    await redisClient.del(`menus_rest_${req.body.rest_id}`);
-
     res.status(201).json(menu);
   } catch (error) {
     next(error);
@@ -85,10 +81,6 @@ exports.delete_menu = async (req, res) => {
     const { id } = req.params;
 
     const deleted = await menus_dao.delete(req.params.id);
-
-      if (!deleted || deleted.rowCount === 0 || deleted === false) {
-      return res.status(404).json({ message: "Menú no encontrado" });
-    }
 
     return res.status(200).json({
       message: "Menú eliminado correctamente"

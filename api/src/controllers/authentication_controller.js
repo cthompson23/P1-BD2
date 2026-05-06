@@ -1,5 +1,5 @@
 const axios = require("axios");
-const pool = require("../config/db.js");
+const { users_dao } = require("../config/database_selector.js");
 
 exports.register = async (req, res) => {
     try {
@@ -18,7 +18,7 @@ exports.register = async (req, res) => {
 
         const token = adminToken.data.access_token;
 
-        // Crear usuario
+        // Crear usuario en Keycloak
         const kcResponse = await axios.post(
             "http://keycloak:8080/admin/realms/restaurant-realm/users",
             {
@@ -66,10 +66,12 @@ exports.register = async (req, res) => {
             }
         }
 
-        await pool.query(
-            "INSERT INTO usuarios (id, email, nombre) VALUES ($1, $2, $3)",
-            [kcUserId, email, `${first_name} ${last_name}`]
-        );
+        // Guardar en nuestra base de datos (PostgreSQL o MongoDB) usando DAO
+        await users_dao.create({
+            id: kcUserId,
+            email: email,
+            nombre: `${first_name} ${last_name}`
+        });
 
         res.status(201).json({
             message: "Usuario registrado correctamente",
@@ -78,7 +80,7 @@ exports.register = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error en registro:", error.response ? error.response.data : error.message); //falta test
+        console.error("Error en registro:", error.response ? error.response.data : error.message);
         res.status(500).json({
             error: "No se pudo registrar el usuario",
             details: error.response ? error.response.data : error.message
@@ -87,7 +89,6 @@ exports.register = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-
     try {
         const { username, password } = req.body;
         const response = await axios.post(

@@ -25,7 +25,8 @@ class dao_factory {
       menus_dao: load("menu"),
       orders_dao: load("orders"),
       reservations_dao: load("reservation"),
-      dishes_dao: load("dishes")
+      dishes_dao: load("dishes"),
+      users_dao: load("users") 
     };
   }
 }

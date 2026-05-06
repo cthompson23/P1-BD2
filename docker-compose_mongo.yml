@@ -1,0 +1,76 @@
+services:
+  mongodb:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
+    volumes:
+      - mongodb_data:/data/db
+    ports:
+      - "27017:27017"
+
+  db_keycloak:
+    image: postgres:18.3
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_KEYCLOAK}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_KEYCLOAK}
+      POSTGRES_DB: ${POSTGRES_DB_KEYCLOAK}
+    ports:
+      - "5433:5432"
+    volumes:
+      - keycloak_db_data:/var/lib/postgresql/data
+    
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.5.5
+    command: start-dev --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: db_keycloak
+      KC_DB_URL_DATABASE: ${POSTGRES_DB_KEYCLOAK}
+      KC_DB_USERNAME: ${POSTGRES_USER_KEYCLOAK}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD_KEYCLOAK}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD}
+    ports:
+      - "8081:8080"
+    depends_on:
+      db_keycloak:
+        condition: service_started
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.3
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - http.host=0.0.0.0
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+
+  api:
+    build: .
+    container_name: api
+    env_file:
+      - .env.mongo
+    depends_on:
+      keycloak:
+        condition: service_started
+      mongodb:
+        condition: service_started
+      elasticsearch:
+        condition: service_started
+    ports:
+      - "5001:${PORT}"
+    command: ["node", "server.js"]
+    
+volumes:
+  mongodb_data:
+    driver: local
+  keycloak_db_data:
+    driver: local
+  esdata:
+    driver: local

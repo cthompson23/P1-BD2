@@ -1,105 +1,76 @@
+const orders_dao = require("../interfaces/orders_dao.js");
+const { getDb } = require("../../config/db.js");
 const { ObjectId } = require("mongodb");
-const connectMongo = require("../../config/mongo_client.js");
-const order_dao = require("../interfaces/orders_dao.js");
 
-class order_mongo_dao extends order_dao {
-  constructor() {
-    super();
-    this.collectionName = "orders";
-  }
+const COLLECTION = "pedidos";
 
-  async _getCollection() {
-    const db = await connectMongo();
-    return db.collection(this.collectionName);
-  }
-
-  async getAll({ userId, isAdmin }) {
-    const collection = await this._getCollection();
-    const filter = {};
-
-    if (!isAdmin) {
-      filter.usuario_id = userId;
-    }
-
-    return await collection.find(filter).toArray();
-  }
-
-  async getById(id, { userId, isAdmin }) {
-    if (!ObjectId.isValid(id)) {
-      return null;
-    }
-
-    const collection = await this._getCollection();
-    const filter = { _id: new ObjectId(id) };
-
-    if (!isAdmin) {
-      filter.usuario_id = userId;
-    }
-
-    return await collection.findOne(filter);
-  }
-
-  async create({ usuario_id, reservacion_id, tipo_pedido, items = [] }) {
-    const collection = await this._getCollection();
-
-    const order = {
-      usuario_id,
-      reservacion_id,
-      tipo_pedido,
-      items,
-      fecha_orden: new Date(),
-      estado: "pendiente"
-    };
-
-    const result = await collection.insertOne(order);
-
+function fromDocument(doc) {
+    if (!doc) return null;
     return {
-      message: "Pedido creado exitosamente",
-      pedido: {
-        _id: result.insertedId,
-        ...order
-      }
+        id: doc._id.toString(),
+        usuario_id: doc.usuario_id,
+        reservacion_id: doc.reservacion_id,
+        tipo_pedido: doc.tipo_pedido,
+        fecha_orden: doc.fecha_orden,
+        estado: doc.estado,
+        items: doc.items || []
     };
-  }
-
-  async updateStatus(id, estado) {
-    const validStates = [
-      "pendiente",
-      "confirmado",
-      "en_preparacion",
-      "listo",
-      "entregado",
-      "cancelado"
-    ];
-
-    if (!validStates.includes(estado)) {
-      throw new Error("Estado inválido");
-    }
-
-    if (!ObjectId.isValid(id)) {
-      return null;
-    }
-
-    const collection = await this._getCollection();
-    const result = await collection.findOneAndUpdate(
-      { _id: new ObjectId(id) },
-      { $set: { estado } },
-      { returnDocument: "after" }
-    );
-
-    return result.value;
-  }
-
-  async delete(id) {
-    if (!ObjectId.isValid(id)) {
-      return false;
-    }
-
-    const collection = await this._getCollection();
-    const result = await collection.deleteOne({ _id: new ObjectId(id) });
-
-    return result.deletedCount > 0;
-  }
 }
 
-module.exports = order_mongo_dao;
+class orders_mongo_dao extends orders_dao {
+    async create(data) {
+        const db = await getDb();
+        const result = await db.collection(COLLECTION).insertOne({
+            usuario_id: data.usuario_id,
+            reservacion_id: data.reservacion_id || null,
+            tipo_pedido: data.tipo_pedido,
+            fecha_orden: data.fecha_orden,
+            estado: data.estado || "pendiente",
+            items: data.items || [],
+            createdAt: new Date(),
+            updatedAt: new Date()
+        });
+        const inserted = await db.collection(COLLECTION).findOne({ _id: result.insertedId });
+        return fromDocument(inserted);
+    }
+
+    async getAll({ userId, isAdmin }) {
+        const db = await getDb();
+        let query = {};
+        
+        if (!isAdmin) {
+            query = { usuario_id: userId };
+        }
+        
+        const docs = await db.collection(COLLECTION).find(query).toArray();
+        return docs.map(fromDocument);
+    }
+
+    async getById(id, { userId, isAdmin }) {
+        const db = await getDb();
+        const order = await db.collection(COLLECTION).findOne({ _id: new ObjectId(id) });
+        
+        if (!order) return null;
+        if (!isAdmin && order.usuario_id !== userId) return null;
+        
+        return fromDocument(order);
+    }
+
+    async updateStatus(id, estado) {
+        const db = await getDb();
+        const result = await db.collection(COLLECTION).findOneAndUpdate(
+            { _id: new ObjectId(id) },
+            { $set: { estado, updatedAt: new Date() } },
+            { returnDocument: 'after' }
+        );
+        return fromDocument(result);
+    }
+
+    async delete(id) {
+        const db = await getDb();
+        const result = await db.collection(COLLECTION).deleteOne({ _id: new ObjectId(id) });
+        return result.deletedCount > 0;
+    }
+}
+
+module.exports = orders_mongo_dao;

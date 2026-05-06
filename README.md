@@ -14,10 +14,10 @@ El proyecto utiliza contenedores Docker, autenticación con Keycloak y una base 
 ## 🛠️ Instalación
 Clonar repositorio:
 ```bash
-git clone https://github.com/
+git clone https://github.com/cthompson23/P1-BD2.git
 ```
 
-Crear archivo ```.env.postgres``` en la raíz del proyecto, por ejemplo:
+Crear archivo ```.env.postgres``` en la raíz del proyecto:
 ```
 PORT=5000
 BD_USER=postgres
@@ -42,9 +42,38 @@ ELASTICSEARCH_ENDPOINT= http://elasticsearch:9200
 ELASTICSEARCH_API_KEY=
 
 ```
-Ejecutar contenedores:
+
+Crear archivo ```.env.mongo``` en la raíz del proyecto:
 ```
-docker compose --env-file .env.postgres -f docker-compose_postgres.yml up --build
+PORT=5000
+DB_TYPE=mongo
+
+MONGO_URL=mongodb://mongodb:27017
+MONGO_DATABASE=restaurantes_db
+
+KC_BOOTSTRAP_ADMIN_USERNAME=admin
+KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+POSTGRES_USER_KEYCLOAK=keycloak
+POSTGRES_PASSWORD_KEYCLOAK=keycloak
+POSTGRES_DB_KEYCLOAK=keycloak_db
+
+ELASTICSEARCH_ENDPOINT=http://elasticsearch:9200
+ELASTICSEARCH_API_KEY=
+
+```
+
+## 🚀 Ejecución
+
+Para Postgres:
+
+```
+docker-compose --env-file .env.postgres -f docker-compose_postgres.yml up --build
+```
+
+Para Mongo:
+
+```
+docker-compose --env-file .env.mongo -f docker-compose_mongo.yml up --build
 ```
 ## 📚 Documentación de la API (Swagger)
 ### Acceso a la documentación
