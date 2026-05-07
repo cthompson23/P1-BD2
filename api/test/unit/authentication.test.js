@@ -1,3 +1,5 @@
+process.env.DB_TYPE = "postgres";
+
 jest.mock("../../src/config/db.js", () => ({
   query: jest.fn(),
 }));
