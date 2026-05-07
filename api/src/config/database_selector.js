@@ -1,21 +1,21 @@
-const  = process.env.DB_TYPE;
+const dbType = process.env.DB_TYPE;
 
-if (!) {
+if (!dbType) {
   throw new Error("DB_TYPE no definido");
 }
 
 const allowedDBs = ["mongo", "postgres"];
 
-if (!allowedDBs.includes()) {
-  throw new Error(`DB_TYPE inválido: ${}`);
+if (!allowedDBs.includes(dbType)) {
+  throw new Error(`DB_TYPE inválido: ${dbType}`);
 }
 
 class dao_factory {
-  static create() {
-    const basePath = `../dao/${}`;
+  static create(dbType) {
+    const basePath = `../dao/${dbType}`;
 
     const load = (name) => {
-      const DAO = require(`${basePath}/${name}_${}_dao.js`);
+      const DAO = require(`${basePath}/${name}_${dbType}_dao.js`);
       return new DAO();
     };
 
@@ -31,4 +31,4 @@ class dao_factory {
   }
 }
 
-module.exports = dao_factory.create();
+module.exports = dao_factory.create(dbType);
