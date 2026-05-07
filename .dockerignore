@@ -16,3 +16,8 @@ docker-compose.yml
 # Entorno
 .env
 .env.*
+
+# Docker y config de infraestructura
+docker/
+config/
+docs/

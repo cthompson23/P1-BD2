@@ -16,8 +16,12 @@ Clonar repositorio:
 ```bash
 git clone https://github.com/cthompson23/P1-BD2.git
 ```
+Navegar al directorio `docker/`:
+```bash
+cd docker
+```
 
-Crear archivo ```.env.postgres``` en la raíz del proyecto:
+Crear archivo ```.env.postgres```:
 ```
 PORT=5000
 BD_USER=postgres
@@ -43,7 +47,7 @@ ELASTICSEARCH_API_KEY=
 
 ```
 
-Crear archivo ```.env.mongo``` en la raíz del proyecto:
+Crear archivo ```.env.mongo``` :
 ```
 PORT=5000
 DB_TYPE=mongo
@@ -63,17 +67,18 @@ ELASTICSEARCH_API_KEY=
 ```
 
 ## 🚀 Ejecución
+Desde la raíz del proyecto, inicializar el servicio con el Docker Compose:
 
 Para Postgres:
 
 ```
-docker-compose --env-file .env.postgres -f docker-compose_postgres.yml up --build
+docker compose --env-file docker/.env.postgres -f docker/docker-compose_postgres.yml up --build 
 ```
 
 Para Mongo:
 
 ```
-docker-compose --env-file .env.mongo -f docker-compose_mongo.yml up --build
+docker compose --env-file docker/.env.mongo -f docker/docker-compose_mongo.yml up --build
 ```
 ## 📚 Documentación de la API (Swagger)
 ### Acceso a la documentación

@@ -69,7 +69,14 @@ class order_postgres_dao extends order_dao {
   }
 
   async updateStatus(id, estado) {
-    const validStates = ["pendiente", "en_proceso", "completado", "cancelado"];
+    const validStates = [
+      "pendiente",
+      "confirmado",
+      "en_preparacion",
+      "listo",
+      "entregado",
+      "cancelado"
+    ];
 
     if (!validStates.includes(estado)) {
       throw new Error("Estado inválido");

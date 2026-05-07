@@ -67,7 +67,14 @@ exports.update_order_status = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { estado } = req.body;
-    const estadosValidos = ["pendiente", "en_proceso", "completado", "cancelado"];
+    const estadosValidos = [
+      "pendiente",
+      "confirmado",
+      "en_preparacion",
+      "listo",
+      "entregado",
+      "cancelado"
+    ];
 
     if (!estado || !estadosValidos.includes(estado)) {
       return res.status(400).json({ message: "Estado inválido" });

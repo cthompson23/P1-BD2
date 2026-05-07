@@ -17,7 +17,12 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - keycloak_db_data:/var/lib/postgresql/data
+      - keycloak_db_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_KEYCLOAK} -d ${POSTGRES_DB_KEYCLOAK}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     
   keycloak:
     image: quay.io/keycloak/keycloak:26.5.5
@@ -34,9 +39,9 @@ services:
       - "8081:8080"
     depends_on:
       db_keycloak:
-        condition: service_started
+        condition: service_healthy
     volumes:
-      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+      - ../config/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.10.3
@@ -50,9 +55,16 @@ services:
       - "9200:9200"
     volumes:
       - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sSf http://localhost:9200/ || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
 
   api:
-    build: .
+    build:
+      context: ..
+      dockerfile: Dockerfile
     container_name: api
     env_file:
       - .env.mongo
@@ -66,6 +78,41 @@ services:
     ports:
       - "5001:${PORT}"
     command: ["node", "server.js"]
+
+  search:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: search
+    env_file:
+      - .env.mongo
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ELASTICSEARCH_ENDPOINT= ${ELASTICSEARCH_ENDPOINT}
+      - ELASTICSEARCH_API_KEY=
+    ports:
+      - "5002:${PORT}"
+    volumes:
+      - ..:/usr/local/app
+    command: ["node", "elastic_search_service/server.js"]
+
+  nginx:
+    image: nginx:1.29.8
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ../config/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - api
+      - search  
+  
+  redis:
+    image: redis:8.6
+    ports:
+      - "6379:6379"
     
 volumes:
   mongodb_data:
