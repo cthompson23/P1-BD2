@@ -82,6 +82,12 @@ exports.delete_menu = async (req, res) => {
 
     const deleted = await menus_dao.delete(req.params.id);
 
+    if (!deleted) {
+      return res.status(404).json({
+        message: "Menu no encontrado"
+      });
+    }
+
     return res.status(200).json({
       message: "Menú eliminado correctamente"
     });
