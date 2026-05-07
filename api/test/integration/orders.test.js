@@ -89,13 +89,13 @@ describe("Integración - Orders (sin auth)", () => {
   // UPDATE STATUS
   // ======================
   it("PATCH /api/orders/:id/status -> actualiza estado", async () => {
-    const updated = { id: 1, estado: "en_proceso" };
+    const updated = { id: 1, estado: "confirmado" };
 
     orders_dao.updateStatus.mockResolvedValue(updated);
 
     const res = await request(app)
       .patch("/api/orders/1/status")
-      .send({ estado: "en_proceso" });
+      .send({ estado: "confirmado" });
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual(updated);
