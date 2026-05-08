@@ -20,11 +20,12 @@ function fromDocument(doc) {
 class orders_mongo_dao extends orders_dao {
     async create(data) {
         const db = await getDb();
+        const today = new Date().toISOString().split('T')[0];
         const result = await db.collection(COLLECTION).insertOne({
             usuario_id: data.usuario_id,
             reservacion_id: data.reservacion_id || null,
             tipo_pedido: data.tipo_pedido,
-            fecha_orden: data.fecha_orden,
+            fecha_orden: today,
             estado: data.estado || "pendiente",
             items: data.items || [],
             createdAt: new Date(),
